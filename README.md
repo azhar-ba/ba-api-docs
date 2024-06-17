@@ -72,10 +72,7 @@ API. Understanding these responses will help you handle them effectively in your
 
 When an API request is successful, the response will always include a code field indicating the HTTP status code and a
 data field containing the relevant information. The format of a success message can
-vary slightly based on the type of operation but will follow the general structures described below.
-
-**Testing**
-Note: you can trigger an success response in the below format by calling GET: /status
+vary slightly based on the type of operation but will follow these general structures:
 
 **Key Fields**
 
@@ -138,10 +135,7 @@ Note: you can trigger an success response in the below format by calling GET: /s
 ### Error Messages
 
 If an API request fails, the response will include a code field indicating the HTTP status code, along with an error
-field that provides details about the failure. The format of an error message is as follows. 
-
-**Testing**
-Note: you can trigger an error response in the below format by calling GET: /error
+field that provides details about the failure. The format of an error message is as follows:
 
 **Key Fields**
 
@@ -165,14 +159,14 @@ Note: you can trigger an error response in the below format by calling GET: /err
 
 ## Endpoints
 
-### GET: /profile
+--- 
+### Get API status [GET: /status]
 
-The /profile endpoint is used to retrieve information about the authenticated client, including their primary contact,
-critical contacts, other contacts, and the assigned Bright Artistry representative (ba_rep).
+This endpoint retrieves the current status of the API
 
-- URL: /profile
-- Method: GET
-- Authentication: Required (API Key)
+- **URL:** `/status`
+- **Method:** `GET`
+- **Authentication:** None
 
 #### Request Body
 
@@ -180,52 +174,123 @@ None
 
 #### Response
 
+A message & code describing the status
+
+```json
+{
+  "data": {
+    "message": "API up and running"
+  },
+  "status": 200
+}
+
+```
+--- 
+
+### Get Organisation Profile [GET: /profile]
+
+This endpoint retrieves the profile information of the client organisation associated with the provided API key.
+
+- **URL:** `/profile`
+- **Method:** `GET`
+- **Authentication:** Required (API Key)
+
+#### Request Body
+
+None
+
+#### Response
+
+Returns the organization profile in JSON format.
+
 ```json
 {
   "status": 200,
   "data": {
-    "ba_rep": "tester@brightartistry.com",
-    "critical_contacts": [
-      {
-        "email": "jane.smith@company.com",
-        "name": "Jane Smith",
-        "phone_number": null,
-        "role": "Developer"
-      },
-      {
-        "email": "bob.johnson@company.com",
-        "name": "Bob Johnson",
-        "phone_number": "098-765-4321",
-        "role": "CTO"
-      }
-    ],
-    "name": "Example Client",
-    "other_contacts": [
-      {
-        "email": "alice.brown@company.com",
-        "name": "Alice Brown",
-        "phone_number": null,
-        "role": "Support"
-      },
-      {
-        "email": "tom.white@company.com",
-        "name": "Tom White",
-        "phone_number": null,
-        "role": "QA"
-      }
-    ],
-    "primary_contact": {
-      "email": "john.doe@company.com",
-      "name": "John Doe",
-      "phone_number": "123-456-7890",
-      "role": "Founder"
-    }
+    "name": "Acme Inc.",
+    "ba_rep": 5654140684836674,
+    "owner": 5654140684002895
   }
 }
 
 ```
+--- 
 
-### POST: /escalate
+### Get Organisation Users [GET: /members]
+
+This endpoint retrieves a list of members associated with the organisation linked to the provided API key.
+
+- **URL:** `/members`
+- **Method:** `GET`
+- **Authentication:** Required (API Key)
+
+#### Request Body
+
+None
+
+#### Response
+
+Returns a list of members (users with extended profile information) in JSON format.
+
+```json
+{
+  "status": 200,
+  "data": [
+    {
+      "consents": {
+        "EMAIL": true,
+        "SMS": false,
+        "WHATSAPP": true
+      },
+      "email": "andy@company.com",
+      "name": "Andy Zane",
+      "org_id": 5648364728190547,
+      "phone_number": "+447772572105",
+      "preferences": [
+        "MINOR",
+        "MAJOR",
+        "CRITICAL"
+      ],
+      "role": "Founder"
+    },
+    {
+      "consents": {
+        "EMAIL": false,
+        "SMS": false,
+        "WHATSAPP": true
+      },
+      "email": "becky@company.com",
+      "name": "Becky Yates",
+      "org_id": 5648364728190547,
+      "phone_number": "+447772572105",
+      "preferences": [
+        "MAJOR",
+        "CRITICAL"
+      ],
+      "role": "Managing Director"
+    },
+    {
+      "consents": {
+        "EMAIL": true,
+        "SMS": true,
+        "WHATSAPP": true
+      },
+      "email": "charlie@company.com",
+      "name": "Charlie Xavier",
+      "org_id": 5648364728190547,
+      "phone_number": "+447772572105",
+      "preferences": [
+        "CRITICAL"
+      ],
+      "role": "Head of Marketing"
+    }
+  ]
+}
+
+```
+--- 
+
+### Escalate [POST: /escalate]
 
 The /escalate endpoint is used to report critical issues or bugs. This endpoint attempts to send a notification via
 WhatsApp first, and if it fails, it sends an email notification.
@@ -250,7 +315,7 @@ Example body:
   "code": "500",
   "application": "ExampleApp",
   "message": "Critical bug detected",
-  "severity": "HIGH",
+  "severity": "MAJOR",
   "trace": "Trace details here"
 }
 
@@ -260,47 +325,72 @@ Example body:
 
 ##### 201 OK
 
-```json
-{
-  "status": 201,
-  "data": {
-    "message": "Escalation actions completed successfully"
-  }
-}
-```
+An array of jobs with their individual data and responses. Note that the `result` object within the job object is the
+same as a general response (both success and failure)
 
 ```json
 {
   "status": 201,
-  "data": {
-    "message": "Escalation actions completed successfully. Whatsapp's failed so fell back to email"
-  }
+  "data": [
+    {
+      "platform": "EMAIL",
+      "recipients": [
+        [
+          "james@company.com",
+          "kate@company.com",
+          "lionel@company.com"
+        ]
+      ],
+      "result": {
+        "data": {
+          "message": "Sent successfully"
+        },
+        "status": 201
+      }
+    },
+    {
+      "platform": "WHATSAPP",
+      "recipients": [
+        "+447772572105"
+      ],
+      "result": {
+        "error": {
+          "code": "SENDER_BLOCKED",
+          "message": "The whatsapp receiver has blocked the sender. Falling back to SMS",
+          "details": ""
+        },
+        "status": 403
+      }
+    },
+    {
+      "platform": "SMS",
+      "recipients": [
+        "+447772572105"
+      ],
+      "result": {
+        "data": {
+          "message": "Sent successfully"
+        },
+        "status": 201
+      }
+    }
+  ]
 }
 ```
-
-##### 400 Bad Request
-
-```json
-{
-  "status": 400,
-  "error": {
-    "message": "Bad Request",
-    "details": "The 'severity' field is required."
-  }
-}
-```
+--- 
+ 
 
 ## Error codes
 
 A list of all noted error codes, accessible via error responses: `response["error"]["code"]`
 
 - Authentication & access
-  - `AUTH_INVALID` 
-  - `AUTH_REVOKED`    
-  - `PERMISSION_DENIED`
-- Request body 
-  - `FIELD_MISSING`
-  - `FIELD_INVALID`
-- Data 
-  - `DATA_MISSING`
+    - `AUTH_INVALID`
+    - `AUTH_REVOKED`
+    - `PERMISSION_DENIED`
+- Request body
+    - `FIELD_MISSING`
+    - `FIELD_INVALID`
+- Data
+    - `DATA_MISSING`
 
