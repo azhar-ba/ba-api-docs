@@ -72,7 +72,10 @@ API. Understanding these responses will help you handle them effectively in your
 
 When an API request is successful, the response will always include a code field indicating the HTTP status code and a
 data field containing the relevant information. The format of a success message can
-vary slightly based on the type of operation but will follow these general structures:
+vary slightly based on the type of operation but will follow the general structures described below.
+
+**Testing**
+Note: you can trigger an success response in the below format by calling GET: /status
 
 **Key Fields**
 
@@ -135,7 +138,10 @@ vary slightly based on the type of operation but will follow these general struc
 ### Error Messages
 
 If an API request fails, the response will include a code field indicating the HTTP status code, along with an error
-field that provides details about the failure. The format of an error message is as follows:
+field that provides details about the failure. The format of an error message is as follows. 
+
+**Testing**
+Note: you can trigger an error response in the below format by calling GET: /error
 
 **Key Fields**
 
