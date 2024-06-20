@@ -160,6 +160,7 @@ field that provides details about the failure. The format of an error message is
 ## Endpoints
 
 --- 
+
 ### Get API status [GET: /status]
 
 This endpoint retrieves the current status of the API
@@ -185,6 +186,7 @@ A message & code describing the status
 }
 
 ```
+
 --- 
 
 ### Get Organisation Profile [GET: /profile]
@@ -214,6 +216,7 @@ Returns the organization profile in JSON format.
 }
 
 ```
+
 --- 
 
 ### Get Organisation Users [GET: /members]
@@ -288,25 +291,28 @@ Returns a list of members (users with extended profile information) in JSON form
 }
 
 ```
+
 --- 
 
 ### Escalate [POST: /escalate]
 
 The /escalate endpoint is used to report critical issues or bugs. This endpoint attempts to send a notification via
 WhatsApp first, and if it fails, it sends an email notification.
-URL: `/escalate`
-Method: `POST`
-Authentication: Required (API Key)
+
+- **URL:** `/escalate`
+- **Method:** `POST`
+- **Authentication:** Required (API Key)
 
 #### Request Body
 
-| Param         | Type     | Req     | Description                                                                                               | 
-|---------------|----------|---------|-----------------------------------------------------------------------------------------------------------|
-| `code`        | `string` | `true`  | The error code of the issue. This is set on your side and can be a HTTP code or internal application code |
-| `application` | `string` | `true`  | The name of the application where the issue occurred                                                      |
-| `message`     | `string` | `true`  | A detailed message describing the issue                                                                   |
-| `severity`    | `string` | `true`  | The severity level of the issue (LOW, MINOR, MAJOR, CRITICAL)                                             |
-| `trace`       | `string` | `false` | The trace details for debugging                                                                           |
+| Param         | Type     | Req     | Description                                                                                  | Guidance                                                                                                                     | 
+|---------------|----------|---------|----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| `code`        | `string` | `true`  | The error code of the issue. This is defined on your side and should be unique to the issue. | It is used for summarising such has subsequent escalations with the same code are thought to refer to the same trigger       |
+| `application` | `string` | `true`  | The name of the application where the issue occurred                                         | Defined as per your setup & is used for grouping and sorting. Format-wise, snake_case is a good idea                         |
+| `message`     | `string` | `true`  | A concise message describing the issue                                                       | This is used an a quick way of identifying more about the issue and can include dynamic information about the specific issue |
+| `severity`    | `string` | `true`  | The severity level of the issue                                                              | One of: `"LOW"`, `"MINOR"`, `"MAJOR"`, `"CRITICAL"`                                                                          |
+| `user_ref`    | `string` | `false` | A unique reference to the user the escalation originates from (e.g. a user id).              | Do not include sensitive information as this is used in summary reports. A user_id internal to you is a good idea.           |
+| `trace`       | `string` | `false` | The trace details for debugging.                                                             | Max length is 1024; will chop from start.                                                                                    |
 
 Example body:
 
@@ -316,6 +322,7 @@ Example body:
   "application": "ExampleApp",
   "message": "Critical bug detected",
   "severity": "MAJOR",
+  "user_ref": "5698284710984738",
   "trace": "Trace details here"
 }
 
@@ -377,8 +384,45 @@ same as a general response (both success and failure)
   ]
 }
 ```
+
 --- 
- 
+
+### Log information [GET: /log/<log_code>]
+
+This endpoint retrieves the details of a specific log using its unique key and displays the information in an HTML
+template.
+
+- **URL:** `/escalate`
+- **Method:** `POST`
+- **Authentication:** None. This is as the link is offered as a "see more" feature
+
+#### Request Body
+
+**URL Parameters:**
+
+`log_key`: The unique key identifying the log to be retrieved.
+
+#### Response
+
+##### 200 OK
+
+Returns the details of the log in an HTML template.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log Details</title>
+</head>
+<body>
+<h1>Log Details</h1>
+...
+</body>
+</html>
+```
+
+--- 
 
 ## Error codes
 
