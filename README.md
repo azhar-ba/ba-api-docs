@@ -2,15 +2,28 @@
 
 ## Table of Contents
 
-1. General Information
-2. Authentication
-3. The Escalate Endpoint
+1. [Overview](#section-overview)
+    1. [Purpose](#section-generalinfo)
+    2. [Features](#section-features)
+2. [How things work](#section-hiw)
+    1. [Escalation](#section-hiw-escalation)
+3. [Authentication](#section-authentication)
+4. [Endpoints](#section-escalation)
+    1. [Get API Status](#section-getstatus)
+    2. [Get Organisation Profile](#section-getprofile)
+    3. [Get Organisation Members](#section-getmembers)
+    4. [Post Escalation](#section-escalate)
+    5. [Get Log Information](#section-getloginfo)
+5. [API Error Codes](#section-errorcodes)
 
-## General Information
+## <a name="section-overview"></a>Overview
 
-The Bright Artistry API is designed to allow clients to report critical issues and receive timely notifications through
-multiple channels. The API ensures secure and efficient communication, enabling clients to escalate issues and track
-their resolutions.
+### <a name="section-purpose"></a>Purpose
+
+The Bright Artistry API provides a robust platform for managing and tracking issues within your applications. It offers
+features for logging errors, escalating critical issues, and integrating with external tools such as ClickUp for task
+management. The API is designed to enhance your operational efficiency by ensuring that critical problems are swiftly
+communicated and addressed.
 
 - **Base URL**:
     - Production: `https://api.brightartistry.com`
@@ -19,7 +32,42 @@ their resolutions.
 - **Response Format**: All responses, whether errors or successes, follow a consistent structure for easy parsing and
   handling.
 
-## Authentication
+### Features
+
+- **Error Logging**
+  The API allows you to log errors from your applications, capturing essential details such as error codes, messages,
+  severity, and additional information. These logs are stored and can be retrieved for analysis and reporting.
+
+- **Escalation**
+  One of the key features of the Bright Artistry API is the ability to escalate critical issues. The escalation process
+  ensures that severe problems are not only logged but also brought to the immediate attention of the relevant
+  stakeholders.
+
+- **Integration with Task Management platforms**
+  For effective task management, the API integrates with ClickUp. When a new major or critical issue is detected, the
+  API
+  can automatically create tasks in ClickUp, ensuring that your team is aware and can take action promptly.
+
+## <a name="section-hiw"></a>How things work
+
+### <a name="section-hiw-escalation"></a>How Escalation works
+
+Escalation in the Bright Artistry API is designed to prioritise and address critical issues as soon as they occur. The
+process involves sending notifications through various channels and creating tasks in ClickUp for thorough tracking and
+resolution.
+
+The logical flow for escalation looks something like in, in order:
+
+1. **Logging:** we store the details for future reference
+2. **Issue Classification:** we check if there have been similar logs in the past and link this new one to the
+   previous under the umbrella of an `Issue`. This is used for summary reports.
+3. **Notifications**: Based on the log and your user and organisation settings, we send out messages on various
+   channels, including:
+   `EMAIL`, `SMS`, `WHATSAPP`.
+4. **Task Management**: Based on the log and your organisation settings, we first check if a task related to this log
+   exists. If it doesn't, we create a new task
+
+## <a name="section-authentication"></a>Authentication
 
 To ensure secure and authorized access to the API, Bright Artistry uses API key authentication. Each client is provided
 with a unique API key that must be included in the headers of every request.
@@ -139,9 +187,9 @@ field that provides details about the failure. The format of an error message is
 
 **Key Fields**
 
-- `status`: HTTP status code indicating the success of the operation (typically 201 for resource creation).
+- `status`: HTTP status code indicating the success of the operation.
 - `error`: Contains detailed information about the operation. This contains
-    1. `code`: A string enum. You can see a list of these in the next section
+    1. `code`: A string enum. You can see a list of these in one of the following sections
     2. `message`: A brief description of the error.
     3. `details`: Additional information about the error, which can help in diagnosing the issue.
 
@@ -157,11 +205,11 @@ field that provides details about the failure. The format of an error message is
 
 ```
 
-## Endpoints
+## <a name="section-endpoints"></a> Endpoints
 
 --- 
 
-### Get API status [GET: /status]
+### <a name="section-getstatus"></a> Get API status [GET: /status]
 
 This endpoint retrieves the current status of the API
 
@@ -189,7 +237,7 @@ A message & code describing the status
 
 --- 
 
-### Get Organisation Profile [GET: /profile]
+### <a name="section-getprofile"></a>Get Organisation Profile [GET: /profile]
 
 This endpoint retrieves the profile information of the client organisation associated with the provided API key.
 
@@ -219,7 +267,7 @@ Returns the organization profile in JSON format.
 
 --- 
 
-### Get Organisation Users [GET: /members]
+### <a name="section-getmembers"></a>Get Organisation Members [GET: /members]
 
 This endpoint retrieves a list of members associated with the organisation linked to the provided API key.
 
@@ -294,7 +342,7 @@ Returns a list of members (users with extended profile information) in JSON form
 
 --- 
 
-### Escalate [POST: /escalate]
+### <a name="section-postescalate"></a>Escalate [POST: /escalate]
 
 The /escalate endpoint is used to report critical issues or bugs. This endpoint attempts to send a notification via
 WhatsApp first, and if it fails, it sends an email notification.
@@ -387,7 +435,7 @@ same as a general response (both success and failure)
 
 --- 
 
-### Log information [GET: /log/<log_code>]
+### <a name="section-getloginfo"></a>Log information [GET: /log/<log_code>]
 
 This endpoint retrieves the details of a specific log using its unique key and displays the information in an HTML
 template.
@@ -424,17 +472,25 @@ Returns the details of the log in an HTML template.
 
 --- 
 
-## Error codes
+## <a name="section-errorcodes"></a>Error codes
 
 A list of all noted error codes, accessible via error responses: `response["error"]["code"]`
 
 - Authentication & access
-    - `AUTH_INVALID`
-    - `AUTH_REVOKED`
-    - `PERMISSION_DENIED`
+    - `AUTH_INVALID`: occurs when the authorisation method / token is not valid
+    - `AUTH_REVOKED`: occurs when the authorisation method / token is no longer valid as it was revoked. Speak to us if
+      you think this is incorrect
+    - `PERMISSION_DENIED`: occurs occurs when the authorisation method / token is ok but you lack the req. permission to
+      take this action. Speak to us if you think this is incorrect
 - Request body
-    - `FIELD_MISSING`
-    - `FIELD_INVALID`
+    - `FIELD_MISSING`: occurs when the request body is missing one or more fields that are required
+    - `FIELD_INVALID`: occurs when the request body is invalid due to one or more fields
 - Data
-    - `DATA_MISSING`
+    - `DATA_MISSING`: occurs when we are attempting to retrieve a required field from the DB but it is missing
+    - `INTERNAL_DB_ERROR`: occurs when there is an issue connecting to or otherwise interacting with the DB when we
+      think
+      we should be able to
+- General
+    - `INTERNAL_SERVER_ERROR`: occurs when something unexpected does; we endeavour to minimise use of this so if it
+      occurs, please reach out because it is probably something we thought could never happen
 
