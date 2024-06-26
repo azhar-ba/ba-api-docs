@@ -7,7 +7,11 @@
     2. [Features](#section-features)
 2. [How things work](#section-hiw)
     1. [Escalation](#section-hiw-escalation)
-3. [Authentication](#section-authentication)
+3. [Configuring the API](#section-configapi)
+    1. [Environments](#section-envs)
+    2. [Authentication](#section-authentication)
+    3. [Headers](#section-headers)
+    4. [Response Format](#section-responses)
 4. [Endpoints](#section-escalation)
     1. [Get API Status](#section-getstatus)
     2. [Get Organisation Profile](#section-getprofile)
@@ -25,14 +29,13 @@ features for logging errors, escalating critical issues, and integrating with ex
 management. The API is designed to enhance your operational efficiency by ensuring that critical problems are swiftly
 communicated and addressed.
 
-- **Base URL**:
-    - Production: `https://api.brightartistry.com`
-    - Development: `https://api-dev.brightartistry.com`
+- **Base URL**: `https://api.brightartistry.com`
 - **Request Format**: All endpoints accept a JSON request body unless specified otherwise.
 - **Response Format**: All responses, whether errors or successes, follow a consistent structure for easy parsing and
   handling.
+- **Auth**: Token based - issued by us. Contact support@brightartistry.com to get one.
 
-### Features
+### <a name="section-features"></a>Features
 
 - **Error Logging**
   The API allows you to log errors from your applications, capturing essential details such as error codes, messages,
@@ -67,17 +70,47 @@ The logical flow for escalation looks something like in, in order:
 4. **Task Management**: Based on the log and your organisation settings, we first check if a task related to this log
    exists. If it doesn't, we create a new task
 
-## <a name="section-authentication"></a>Authentication
+## <a name="section-configapi"></a>Configuring the API
+
+### <a name="section-envs"></a>Environments
+
+There are two environments: `DEV` and `PROD`. They are very similar and offer minimal difference at the moment.
+
+#### Similarities
+
+- **SAME: Database**: They are connected to the same database
+- **SAME: Version**: They run the **same version** of the API (yes always)
+- **SAME: Auth**: By virtue of the first point, API keys issued work for both
+
+#### Differences
+
+At the moment, the differences are minimal and I will be listing them here before the point there is a fully independent
+dev / prod split. The environments only exist at the moment as a way to ease initial client-side integration.
+
+- **DIFFERENT: `/escalate`**: On `DEV`, this does not send messages and instead just
+  returns you a list of jobs that _would_ have been completed with the given escalation info.
+
+#### Connecting to various environments
+
+To control which environment you are connected to, use the `Environment` header with either `DEV` or `PROD`.
+
+Example Request Header:
+
+```
+Environment: DEV
+```
+
+### <a name="section-authentication"></a>Authentication
 
 To ensure secure and authorized access to the API, Bright Artistry uses API key authentication. Each client is provided
 with a unique API key that must be included in the headers of every request.
 
-### Obtaining an API Key
+#### Obtaining an API Key
 
 To obtain an API key, please contact your BA Rep or the support team at [support@brightartistry.com](). Your request
 should include details about your application and the intended use of the API.
 
-#### Test Client and API Key
+##### Test Client and API Key
 
 For developers looking to test and interact with the Bright Artistry API, there is a single example client available.
 This allows developers to explore and understand the API functionalities without affecting live data.
@@ -88,15 +121,16 @@ and ensure everything works as expected before moving to the production environm
 Interactions: With the test API key, you can make requests to the development environment. This provides a realistic
 testing scenario while ensuring that no production data is impacted.
 
-### Using the API Key
+#### Using the API Key
 
-Include the API key in the `x-api-key` header of your HTTP requests. Here is an example of how to use the API key in a
+Include the API key in the `Authorization` header of your HTTP requests. Here is an example of how to use the API key in
+a
 request:
 
 Example Request Header:
 
 ```
-x-api-key: your_api_key_here
+Authorization: Bearer your_api_key_here
 ```
 
 Example usage:
@@ -104,19 +138,30 @@ Example usage:
 ```
 curl -X POST https://api.brightartistry.com/profile \
   -H "Content-Type: application/json" \
-  -H "x-api-key: your_api_key_here" \
+  -H "Authorization: Bearer bd9isfhiweurvw948yrnr293" \
   -d '{
         "name": "Example Company",
       }'
 ```
 
-## Response format
+### <a name="section-headers"></a>Headers
+
+This table outlines a list of notable headers. Usual guidance and standards apply outside what is described here.
+
+| Header          | Value                          | Req         | More info                                  | 
+|-----------------|--------------------------------|-------------|--------------------------------------------|
+| `Content-Type`  | `application/json`             | `true`      |                                            |
+| `Authorization` | `Bearer <your_api_token_here>` | `sometimes` | See endpoints below for requirement status |
+| `Environment`   | `DEV` or `PROD`                | `false`     | Defaults to `PROD` if not supplied         |
+| `User-Agent`    | `<user_agent_here>`            | `false`     | Encouraged                                 |
+
+### <a name="section-responses"></a>Response format
 
 At Bright Artistry, we aim to provide clear, consistent, and actionable responses to all API requests. This
 documentation outlines the structure and content of success and error messages you can expect when interacting with our
 API. Understanding these responses will help you handle them effectively in your applications.
 
-### Success Messages
+#### Success Messages
 
 When an API request is successful, the response will always include a code field indicating the HTTP status code and a
 data field containing the relevant information. The format of a success message can
@@ -130,7 +175,7 @@ vary slightly based on the type of operation but will follow these general struc
     2. A single entity unique to the endpoint
     3. An array of entities
 
-#### 1. General success message
+##### 1. General success message
 
 ```json
 {
@@ -141,7 +186,7 @@ vary slightly based on the type of operation but will follow these general struc
 }
 ```
 
-#### 2. Single object
+##### 2. Single object
 
 ```json
 {
@@ -154,7 +199,7 @@ vary slightly based on the type of operation but will follow these general struc
 }
 ```
 
-#### 3. Multiple Objects:
+##### 3. Multiple Objects:
 
 ```json
 {
@@ -180,7 +225,7 @@ vary slightly based on the type of operation but will follow these general struc
 
 ```
 
-### Error Messages
+#### Error Messages
 
 If an API request fails, the response will include a code field indicating the HTTP status code, along with an error
 field that provides details about the failure. The format of an error message is as follows:
@@ -353,14 +398,15 @@ WhatsApp first, and if it fails, it sends an email notification.
 
 #### Request Body
 
-| Param         | Type     | Req     | Description                                                                                  | Guidance                                                                                                                     | 
-|---------------|----------|---------|----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| `code`        | `string` | `true`  | The error code of the issue. This is defined on your side and should be unique to the issue. | It is used for summarising such has subsequent escalations with the same code are thought to refer to the same trigger       |
-| `application` | `string` | `true`  | The name of the application where the issue occurred                                         | Defined as per your setup & is used for grouping and sorting. Format-wise, snake_case is a good idea                         |
-| `message`     | `string` | `true`  | A concise message describing the issue                                                       | This is used an a quick way of identifying more about the issue and can include dynamic information about the specific issue |
-| `severity`    | `string` | `true`  | The severity level of the issue                                                              | One of: `"LOW"`, `"MINOR"`, `"MAJOR"`, `"CRITICAL"`                                                                          |
-| `user_ref`    | `string` | `false` | A unique reference to the user the escalation originates from (e.g. a user id).              | Do not include sensitive information as this is used in summary reports. A user_id internal to you is a good idea.           |
-| `trace`       | `string` | `false` | The trace details for debugging.                                                             | Max length is 1024; will chop from start.                                                                                    |
+| Param         | Type     | Req     | Description                                                                                  | Guidance                                                                                                                                                                    | 
+|---------------|----------|---------|----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `code`        | `string` | `true`  | The error code of the issue. This is defined on your side and should be unique to the issue. | It is used for summarising such has subsequent escalations with the same code are thought to refer to the same trigger                                                      |
+| `application` | `string` | `true`  | The name of the application where the issue occurred                                         | Defined as per your setup & is used for grouping and sorting. Format-wise, snake_case is a good idea                                                                        |
+| `message`     | `string` | `true`  | A concise message describing the issue                                                       | This is used an a quick way of identifying more about the issue and can include dynamic information about the specific issue                                                |
+| `severity`    | `string` | `true`  | The severity level of the issue                                                              | One of: `"LOW"`, `"MINOR"`, `"MAJOR"`, `"CRITICAL"`                                                                                                                         |
+| `user_ref`    | `string` | `false` | A unique reference to the user the escalation originates from (e.g. a user id).              | Do not include sensitive information as this is used in summary reports. A user_id internal to you is a good idea.                                                          |
+| `user_agent`  | `string` | `false` | A description of the software and hardware where the escalation originated from              | Exact format decided on your side as per your design. We would recommend a format that matches the [classic header format](https://en.wikipedia.org/wiki/User-Agent_header) |
+| `trace`       | `string` | `false` | The trace details for debugging.                                                             | Max length is 1024; will chop from start.                                                                                                                                   |
 
 Example body:
 
@@ -371,6 +417,7 @@ Example body:
   "message": "Critical bug detected",
   "severity": "MAJOR",
   "user_ref": "5698284710984738",
+  "user_agent": "Mozilla/5.0 (iPad; U; CPU OS 3_2_1 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405",
   "trace": "Trace details here"
 }
 
